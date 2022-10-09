@@ -21,11 +21,8 @@ class BlogsController < ApplicationController
   def edit; end
 
   def create
-    @blog = current_user.blogs.new(blog_params)
-
-    if !current_user.premium? && coerce_boolean(params[:blog][:random_eyecatch])
-      redirect_to blogs_url, alert: 'You cannot use random_eyecatch.'
-    elsif @blog.save
+    @blog = current_user.premium? ? current_user.blogs.new(blog_params) : current_user.blogs.new(blog_without_eycatch_params)
+    if @blog.save
       redirect_to blog_url(@blog), notice: 'Blog was successfully created.'
     else
       render :new, status: :unprocessable_entity
@@ -33,9 +30,7 @@ class BlogsController < ApplicationController
   end
 
   def update
-    if !current_user.premium? && coerce_boolean(params[:blog][:random_eyecatch])
-      redirect_to blog_url(@blog), alert: 'You cannot use random_eyecatch.'
-    elsif @blog.update(blog_params)
+    if current_user.premium? ? @blog.update(blog_params) : @blog.update(blog_without_eycatch_params)
       redirect_to blog_url(@blog), notice: 'Blog was successfully updated.'
     else
       render :edit, status: :unprocessable_entity
@@ -63,7 +58,7 @@ class BlogsController < ApplicationController
     params.require(:blog).permit(:title, :content, :secret, :random_eyecatch)
   end
 
-  def coerce_boolean(value)
-    value.nil? || value == '' ? nil : !Set[false, 'false', 0, '0'].include?(value)
+  def blog_without_eycatch_params
+    params.require(:blog).permit(:title, :content, :secret)
   end
 end
