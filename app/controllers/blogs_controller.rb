@@ -21,7 +21,7 @@ class BlogsController < ApplicationController
   def edit; end
 
   def create
-    @blog = current_user.premium? ? current_user.blogs.new(blog_params) : current_user.blogs.new(blog_without_eycatch_params)
+    @blog = current_user.blogs.new(blog_params(premium: current_user.premium?))
     if @blog.save
       redirect_to blog_url(@blog), notice: 'Blog was successfully created.'
     else
@@ -30,7 +30,7 @@ class BlogsController < ApplicationController
   end
 
   def update
-    if current_user.premium? ? @blog.update(blog_params) : @blog.update(blog_without_eycatch_params)
+    if @blog.update(blog_params(premium: current_user.premium?))
       redirect_to blog_url(@blog), notice: 'Blog was successfully updated.'
     else
       render :edit, status: :unprocessable_entity
@@ -54,11 +54,11 @@ class BlogsController < ApplicationController
     @blog = current_user.blogs.find(params[:id])
   end
 
-  def blog_params
-    params.require(:blog).permit(:title, :content, :secret, :random_eyecatch)
-  end
-
-  def blog_without_eycatch_params
-    params.require(:blog).permit(:title, :content, :secret)
+  def blog_params(premium: false)
+    if premium
+      params.require(:blog).permit(:title, :content, :secret, :random_eyecatch)
+    else
+      params.require(:blog).permit(:title, :content, :secret)
+    end
   end
 end
